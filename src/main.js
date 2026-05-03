@@ -162,6 +162,7 @@ let chargeStart = 0;
 let charge = 0;
 let lastThrow = 0;
 let gameOver = false;
+let modalReadyAt = 0;
 
 const aimRing = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 14, 48), ghostMat);
 aimRing.position.set(0, -0.45, -1.2);
@@ -257,7 +258,9 @@ function resetRound() {
   targetYaw = 0;
   targetPitch = -0.03;
   modal.classList.remove('show');
+  modal.classList.remove('ready');
   modal.setAttribute('aria-hidden', 'true');
+  modalReadyAt = 0;
   showToast('Hit pop-up worms fast for bonus points.');
   updateHud();
 }
@@ -362,8 +365,20 @@ throwButton.addEventListener('pointerup', (event) => {
 });
 throwButton.addEventListener('pointerleave', endCharge);
 resetButton.addEventListener('click', resetRound);
-playAgainButton.addEventListener('click', resetRound);
-shareButton.addEventListener('click', shareScore);
+playAgainButton.addEventListener('click', (event) => {
+  if (!isModalReady()) {
+    event.preventDefault();
+    return;
+  }
+  resetRound();
+});
+shareButton.addEventListener('click', (event) => {
+  if (!isModalReady()) {
+    event.preventDefault();
+    return;
+  }
+  shareScore();
+});
 
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
@@ -568,12 +583,21 @@ function updateRings(delta, now) {
 function endRound() {
   gameOver = true;
   charging = false;
+  modalReadyAt = performance.now() + 850;
   const accuracy = throwsTaken ? Math.round((hits / throwsTaken) * 100) : 0;
   finalScore.textContent = String(score);
   finalAccuracy.textContent = `${accuracy}%`;
   finalHits.textContent = `${hits} / ${throwsTaken}`;
   modal.classList.add('show');
+  modal.classList.remove('ready');
   modal.setAttribute('aria-hidden', 'false');
+  window.setTimeout(() => {
+    if (gameOver && performance.now() >= modalReadyAt) modal.classList.add('ready');
+  }, 850);
+}
+
+function isModalReady() {
+  return gameOver && performance.now() >= modalReadyAt;
 }
 
 async function shareScore() {

@@ -290,6 +290,10 @@ button {
   padding: 0 12px;
 }
 
+.modal:not(.ready) .modal-actions button {
+  pointer-events: none;
+}
+
 .modal-actions button:disabled {
   cursor: wait;
   opacity: 0.68;
